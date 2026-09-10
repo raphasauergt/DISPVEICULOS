@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Frota</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1319;
+  --bg-grid: #151A22;
+  --panel:#1A2029;
+  --panel-2:#1F2732;
+  --border:#2A3240;
+  --border-soft:#232B37;
+  --text:#EDEFF2;
+  --text-dim:#9AA4B2;
+  --text-faint:#5E6876;
+  --ok:#31C77E;
+  --ok-dim:#1B7A4D;
+  --ok-bg:rgba(49,199,126,0.12);
+  --alert:#FF5C42;
+  --alert-dim:#B33B27;
+  --alert-bg:rgba(255,92,66,0.13);
+  --warn:#FFB136;
+  --warn-bg:rgba(255,177,54,0.13);
+  --info:#4FA6E8;
+  --info-bg:rgba(79,166,232,0.10);
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1100px 500px at 10% -10%, rgba(79,166,232,0.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(255,92,66,0.05), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:'Archivo',-apple-system,BlinkMacSystemFont,sans-serif;
+  min-height:100vh;
+  padding:28px 32px 60px;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+/* ---------- Header ---------- */
+.header{
+  display:flex; justify-content:space-between; align-items:flex-end;
+  flex-wrap:wrap; gap:16px;
+  margin-bottom:26px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--border-soft);
+}
+.header-title{display:flex; align-items:center; gap:14px;}
+.logo-mark{
+  width:40px;height:40px;border-radius:9px;
+  background:linear-gradient(135deg, var(--info), #2C6FA8);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  box-shadow: 0 4px 14px rgba(79,166,232,0.25);
+}
+.logo-mark svg{width:22px;height:22px;}
+.header h1{font-size:22px; font-weight:800; margin:0; letter-spacing:-0.01em;}
+.header .sub{font-size:13px; color:var(--text-dim); margin-top:3px;}
+.header-right{display:flex; align-items:center; gap:10px;}
+.date-pill{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px; color:var(--text-dim);
+  background:var(--panel); border:1px solid var(--border);
+  padding:8px 12px; border-radius:8px;
+}
+.btn{
+  font-family:'Archivo',sans-serif; font-weight:600; font-size:13px;
+  border-radius:8px; padding:9px 14px; cursor:pointer;
+  border:1px solid var(--border); background:var(--panel);
+  color:var(--text); transition:.15s ease; display:inline-flex; align-items:center; gap:7px;
+}
+.btn:hover{background:var(--panel-2); border-color:#39424f;}
+.btn-primary{background:var(--info); border-color:var(--info); color:#0B1420;}
+.btn-primary:hover{background:#63b4ee;}
+.btn-ghost{background:transparent;}
+.btn-danger-ghost{color:var(--alert); border-color:transparent;}
+.btn-danger-ghost:hover{background:var(--alert-bg);}
+.btn:disabled{opacity:.4; cursor:not-allowed;}
+
+/* ---------- KPI row ---------- */
+.kpi-row{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
+  margin-bottom:22px;
+}
+.kpi{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+  padding:18px 20px; position:relative; overflow:hidden;
+}
+.kpi::before{
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+}
+.kpi.k-total::before{background:var(--info);}
+.kpi.k-ok::before{background:var(--ok);}
+.kpi.k-alert::before{background:var(--alert);}
+.kpi.k-pct::before{background:var(--warn);}
+.kpi-label{font-size:11.5px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.06em;}
+.kpi-value{font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; margin-top:8px; letter-spacing:-0.02em;}
+.kpi-value .unit{font-size:14px; color:var(--text-dim); font-weight:500; margin-left:4px;}
+.kpi-foot{font-size:12px; color:var(--text-faint); margin-top:6px;}
+.kpi.k-ok .kpi-value{color:var(--ok);}
+.kpi.k-alert .kpi-value{color:var(--alert);}
+
+/* ---------- Main grid ---------- */
+.main-grid{
+  display:grid; grid-template-columns: 1.15fr 1fr; gap:16px; align-items:start;
+}
+.panel{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+  overflow:hidden;
+}
+.panel-head{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 18px; border-bottom:1px solid var(--border-soft);
+}
+.panel-head h2{font-size:14.5px; font-weight:700; margin:0;}
+.panel-head .count-tag{
+  font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-dim);
+  background:var(--panel-2); padding:3px 9px; border-radius:999px; border:1px solid var(--border);
+}
+.panel-body{padding:16px 18px 18px;}
+
+/* ---------- Profile bars ---------- */
+.profile-row{margin-bottom:16px;}
+.profile-row:last-child{margin-bottom:0;}
+.profile-row-top{
+  display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;
+}
+.profile-name{font-size:13.5px; font-weight:700;}
+.profile-nums{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-dim);}
+.profile-nums b{color:var(--text);}
+.bar-track{
+  height:20px; border-radius:6px; background:var(--panel-2);
+  overflow:hidden; display:flex; border:1px solid var(--border-soft);
+}
+.bar-seg{height:100%; display:flex; align-items:center;}
+.bar-ok{background:linear-gradient(180deg, #3BD98C, var(--ok));}
+.bar-alert{background:linear-gradient(180deg, #FF7458, var(--alert));}
+.bar-empty{background:repeating-linear-gradient(135deg, #262E3A, #262E3A 6px, #212832 6px, #212832 12px);}
+.profile-weights{
+  display:flex; justify-content:space-between; margin-top:5px;
+  font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;
+}
+.profile-weights .w-ok{color:var(--ok-dim);}
+.profile-weights .w-alert{color:var(--alert-dim);}
+
+/* ---------- Legend ---------- */
+.legend{display:flex; gap:16px; padding:0 18px 14px; font-size:11.5px; color:var(--text-dim);}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.dot{width:8px;height:8px;border-radius:2px;}
+.dot-ok{background:var(--ok);}
+.dot-alert{background:var(--alert);}
+
+/* ---------- Assignment table ---------- */
+.toolbar{
+  display:flex; gap:8px; padding:0 18px 14px; flex-wrap:wrap; align-items:center;
+}
+.search{
+  flex:1; min-width:140px;
+  background:var(--panel-2); border:1px solid var(--border); border-radius:7px;
+  padding:8px 11px; color:var(--text); font-size:12.5px; font-family:'Archivo',sans-serif;
+}
+.search::placeholder{color:var(--text-faint);}
+.filter-chip{
+  font-size:12px; padding:7px 11px; border-radius:7px; border:1px solid var(--border);
+  background:var(--panel-2); color:var(--text-dim); cursor:pointer; font-weight:600;
+}
+.filter-chip.active{background:var(--info-bg); border-color:var(--info); color:var(--info);}
+
+.table-wrap{max-height:520px; overflow-y:auto;}
+table{width:100%; border-collapse:collapse; font-size:12.5px;}
+thead th{
+  position:sticky; top:0; background:var(--panel-2); z-index:1;
+  text-align:left; padding:9px 10px; font-size:10.5px; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--text-faint); font-weight:700; border-bottom:1px solid var(--border);
+}
+tbody td{padding:9px 10px; border-bottom:1px solid var(--border-soft); vertical-align:middle;}
+tbody tr{transition: background .12s;}
+tbody tr:hover{background:var(--panel-2);}
+tbody tr.row-alert{background:var(--alert-bg);}
+tbody tr.row-alert:hover{background:rgba(255,92,66,0.20);}
+.placa-tag{
+  font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px;
+  background:var(--panel-2); border:1px solid var(--border); padding:3px 7px; border-radius:5px;
+  display:inline-block; letter-spacing:.02em;
+}
+.motorista-name{font-weight:600; font-size:12px;}
+.motorista-id{color:var(--text-faint); font-size:10.5px; font-family:'JetBrains Mono',monospace;}
+.perfil-badge{
+  font-size:11px; font-weight:600; color:var(--text-dim);
+}
+.peso-cell{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim);}
+.status-badge{
+  font-size:10.5px; font-weight:700; padding:4px 8px; border-radius:999px;
+  display:inline-flex; align-items:center; gap:5px; text-transform:uppercase; letter-spacing:.03em;
+}
+.status-ok{background:var(--ok-bg); color:var(--ok);}
+.status-alert{background:var(--alert-bg); color:var(--alert);}
+.status-warn{background:var(--warn-bg); color:var(--warn);}
+
+.switch{position:relative; width:36px; height:20px; flex-shrink:0;}
+.switch input{opacity:0; width:0; height:0;}
+.slider{
+  position:absolute; cursor:pointer; inset:0; background:var(--panel-2);
+  border:1px solid var(--border); border-radius:999px; transition:.15s;
+}
+.slider::before{
+  content:''; position:absolute; width:14px; height:14px; left:2px; top:2px;
+  background:var(--text-faint); border-radius:50%; transition:.15s;
+}
+input:checked + .slider{background:var(--ok-bg); border-color:var(--ok);}
+input:checked + .slider::before{transform:translateX(16px); background:var(--ok);}
+
+select.status-select{
+  background:var(--panel-2); color:var(--text); border:1px solid var(--border);
+  border-radius:6px; padding:5px 7px; font-size:11.5px; font-family:'Archivo',sans-serif;
+  cursor:pointer;
+}
+select.status-select:focus, .search:focus{outline:2px solid var(--info); outline-offset:1px;}
+
+.icon-btn{
+  background:transparent; border:none; color:var(--text-faint); cursor:pointer;
+  padding:4px; border-radius:5px; display:flex; align-items:center; justify-content:center;
+}
+.icon-btn:hover{color:var(--alert); background:var(--alert-bg);}
+
+/* ---------- Add row form ---------- */
+.add-form{
+  display:flex; gap:8px; padding:14px 18px; border-top:1px solid var(--border-soft);
+  flex-wrap:wrap; background:var(--panel-2);
+}
+.add-form select, .add-form input{
+  background:var(--panel); color:var(--text); border:1px solid var(--border);
+  border-radius:7px; padding:8px 10px; font-size:12.5px; font-family:'Archivo',sans-serif;
+}
+.add-form select{flex:1; min-width:120px;}
+.add-form input{flex:1.4; min-width:150px;}
+
+.empty-state{padding:30px 18px; text-align:center; color:var(--text-faint); font-size:12.5px;}
+
+footer{margin-top:26px; text-align:center; color:var(--text-faint); font-size:11.5px;}
+footer a{color:var(--text-dim);}
+
+@media (max-width: 980px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .main-grid{grid-template-columns:1fr;}
+  body{padding:20px 14px 50px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 13h11l3 4h4v-4l-3-5h-4V7H3v6z" stroke="#0B1420" stroke-width="2" stroke-linejoin="round"/><circle cx="7.5" cy="18" r="1.6" fill="#0B1420"/><circle cx="17.5" cy="18" r="1.6" fill="#0B1420"/></svg>
+    </div>
+    <div>
+      <h1>Painel de Controle de Frota</h1>
+      <div class="sub">Disponibilidade diária de veículos por perfil</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="date-pill" id="todayPill">--</div>
+    <button class="btn btn-ghost" id="resetBtn" title="Restaurar dados originais da planilha">Restaurar dados originais</button>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi k-total">
+    <div class="kpi-label">Veículos no controle</div>
+    <div class="kpi-value" id="kpiTotal">0<span class="unit">veíc.</span></div>
+    <div class="kpi-foot" id="kpiTotalFoot">— na frota cadastrada</div>
+  </div>
+  <div class="kpi k-ok">
+    <div class="kpi-label">Peso disponível</div>
+    <div class="kpi-value" id="kpiPesoOk">0<span class="unit">kg</span></div>
+    <div class="kpi-foot" id="kpiPesoOkFoot">— veículos confirmados</div>
+  </div>
+  <div class="kpi k-alert">
+    <div class="kpi-label">Peso pendente</div>
+    <div class="kpi-value" id="kpiPesoAlert">0<span class="unit">kg</span></div>
+    <div class="kpi-foot" id="kpiPesoAlertFoot">— sem veículo confirmado</div>
+  </div>
+  <div class="kpi k-pct">
+    <div class="kpi-label">Cobertura da frota</div>
+    <div class="kpi-value" id="kpiPct">0<span class="unit">%</span></div>
+    <div class="kpi-foot">disponível vs. peso total do dia</div>
+  </div>
+</div>
+
+<div class="main-grid">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Disponibilidade por perfil de veículo</h2>
+      <span class="count-tag" id="profileCount">0 perfis</span>
+    </div>
+    <div class="legend">
+      <span><i class="dot dot-ok"></i>Disponível</span>
+      <span><i class="dot dot-alert"></i>Pendente</span>
+    </div>
+    <div class="panel-body" id="profileList"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Veículos escalados hoje</h2>
+      <span class="count-tag" id="rowCount">0 registros</span>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="searchInput" placeholder="Buscar placa ou motorista...">
+      <button class="filter-chip active" data-filter="all">Todos</button>
+      <button class="filter-chip" data-filter="ok">Disponíveis</button>
+      <button class="filter-chip" data-filter="alert">Pendentes</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Placa / Perfil</th>
+            <th>Motorista</th>
+            <th>Peso</th>
+            <th>Status</th>
+            <th>Validado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none;">Nenhum veículo encontrado.</div>
+    </div>
+    <div class="add-form">
+      <select id="addPlaca"></select>
+      <input id="addMotorista" placeholder="Nome do motorista">
+      <select id="addOrigem">
+        <option>Frota Própria</option>
+        <option>Agregados</option>
+        <option>Spot</option>
+        <option>Não informado</option>
+      </select>
+      <button class="btn btn-primary" id="addBtn">+ Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<footer>Dados carregados de VEICULOS_-_MOTORISTAS_2026_AJUSTADA.xlsx · edições salvas automaticamente neste dispositivo</footer>
+
+<script>
+const FLEET = [{"placa": "TBM6H79", "perfil": "VUC", "pesoMax": 2500}, {"placa": "TBM6H85", "perfil": "VUC", "pesoMax": 2500}, {"placa": "RVE0H38", "perfil": "VUC", "pesoMax": 2100}, {"placa": "RVE0H44", "perfil": "VUC", "pesoMax": 2100}, {"placa": "RVE0H46", "perfil": "VUC", "pesoMax": 2100}, {"placa": "RVE0H48", "perfil": "VUC", "pesoMax": 2100}, {"placa": "SFB1C02", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RHH0B72", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "JQZ0D16", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "AXU9F69", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "ATW4G47", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RVD0J87", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RVD0J88", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RUY7D48", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RUY7D65", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RVC1E94", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RUY7D62", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "SER3F67", "perfil": "3/4 LEVE", "pesoMax": 5500}, {"placa": "FUN2F74", "perfil": "3/4 LEVE", "pesoMax": 5500}, {"placa": "BETÃO", "perfil": "3/4 LEVE", "pesoMax": 5500}, {"placa": "AYI3G68", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "MMJ1A16", "perfil": "3/4 ADAPT", "pesoMax": 6000}, {"placa": "RVC1F08", "perfil": "3/4 ADAPT", "pesoMax": 6500}, {"placa": "RVC1F15", "perfil": "3/4 ADAPT", "pesoMax": 6500}, {"placa": "RVC1F26", "perfil": "3/4 ADAPT", "pesoMax": 6500}, {"placa": "KVK8D16", "perfil": "TOCO", "pesoMax": 7500}, {"placa": "RUY7D69", "perfil": "TOCO", "pesoMax": 7500}, {"placa": "APZ7814", "perfil": "TOCO", "pesoMax": 7500}, {"placa": "MBH6424", "perfil": "TRUCK", "pesoMax": 13000}, {"placa": "OVO1803", "perfil": "BITRUCK", "pesoMax": 16500}, {"placa": "OVO1920", "perfil": "BITRUCK", "pesoMax": 16500}, {"placa": "AZT4J42", "perfil": "BITRUCK", "pesoMax": 16500}, {"placa": "UAV6A23", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "AZU2043", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "QIU3C76", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "ARG4I29", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "JBX2A51", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "MEW8I53", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "AXU5151", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "SEA3A72", "perfil": "VUC", "pesoMax": 2500}, {"placa": "QIR0E71", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RHS6J73", "perfil": "VAN", "pesoMax": 1700}, {"placa": "AXW6A22", "perfil": "3/4 LEVE", "pesoMax": 8000}, {"placa": "BBR1E62", "perfil": "VUC", "pesoMax": 2800}, {"placa": "RTS0I75", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RVC1F24", "perfil": "3/4 ADAPT", "pesoMax": 6500}, {"placa": "RVD0J89", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "ASR9G14", "perfil": "VUC", "pesoMax": 3200}, {"placa": "BAW8910", "perfil": "TOCO", "pesoMax": 8000}, {"placa": "AWN2C75", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RUY7D56", "perfil": "3/4 LEVE", "pesoMax": 5000}, {"placa": "RUY7D43", "perfil": "3/4 LEVE", "pesoMax": 5000}];
+const DEFAULT_ASSIGNMENTS = [{"motorista": "000117 - JOSE GERMANO SOARES", "transp": "000073", "placa": "RVE0H46", "origem": "Frota Própria", "validado": true, "status": "MANUTENÇÃO", "id": "a1"}, {"motorista": "011718 - JULIO FELIX", "transp": "000073", "placa": "RVE0H48", "origem": "Frota Própria", "validado": true, "status": "", "id": "a2"}, {"motorista": "017944 - JOEL ROSA DE SOUZA", "transp": "000073", "placa": "RVE0H44", "origem": "Frota Própria", "validado": true, "status": "MANUTENÇÃO", "id": "a3"}, {"motorista": "021263 - MAICON SAGRILO", "transp": "000073", "placa": "RVE0H38", "origem": "Frota Própria", "validado": true, "status": "", "id": "a4"}, {"motorista": "019757 - RAFAEL DO NASCIMENTO MORAES", "transp": "001918", "placa": "SEA3A72", "origem": "Agregados", "validado": true, "status": "", "id": "a5"}, {"motorista": "018630 - RAFAEL AUGUSTO DE PAULA", "transp": "002073", "placa": "AZU2043", "origem": "Agregados", "validado": true, "status": "", "id": "a6"}, {"motorista": "62584 - ISAEL RIBEIRO TERRA", "transp": "000073", "placa": "RUY7D56", "origem": "Não informado", "validado": false, "status": "", "id": "a7"}, {"motorista": "62553 - RAFAEL FADEL ROMÃO", "transp": "000073", "placa": "RUY7D43", "origem": "Não informado", "validado": false, "status": "", "id": "a8"}, {"motorista": "016927 - RAFAEL AUGUSTO URIAS", "transp": "002073", "placa": "JQZ0D16", "origem": "Agregados", "validado": true, "status": "", "id": "a9"}, {"motorista": "017554 - RAFAEL BRUNO COMO", "transp": "002087", "placa": "AWN2C75", "origem": "Agregados", "validado": true, "status": "", "id": "a10"}, {"motorista": "017965 - GUILHERME PARIZZI KAUFMAN", "transp": "0012473", "placa": "AXU9F69", "origem": "Agregados", "validado": true, "status": "", "id": "a11"}, {"motorista": "011324 - SERGIO ANDRE CAMPO SANTANA", "transp": "000073", "placa": "RUY7D65", "origem": "Frota Própria", "validado": true, "status": "", "id": "a12"}, {"motorista": "017141 - FABIO RIBEIRO CALDAS", "transp": "000073", "placa": "RVD0J89", "origem": "Frota Própria", "validado": true, "status": "", "id": "a13"}, {"motorista": "017554 - RAFAEL BRUNO COMO", "transp": "002087", "placa": "QIU3C76", "origem": "Spot", "validado": true, "status": "", "id": "a14"}, {"motorista": "019762 - VALTER RUBIO JUNIOR", "transp": "002073", "placa": "AXU5151", "origem": "Agregados", "validado": true, "status": "", "id": "a15"}, {"motorista": "017965 - WESLEI DIAS BORGES", "transp": "0012473", "placa": "AYI3G68", "origem": "Agregados", "validado": true, "status": "", "id": "a16"}, {"motorista": "017554 - RAFAEL BRUNO COMO", "transp": "002087", "placa": "FUN2F74", "origem": "Agregados", "validado": false, "status": "", "id": "a17"}, {"motorista": "017122 - PAULO SERGIO MOREIRA", "transp": "000073", "placa": "RVC1F15", "origem": "Frota Própria", "validado": true, "status": "", "id": "a18"}, {"motorista": "017677 - ELITON TACCI", "transp": "000073", "placa": "RVC1F08", "origem": "Frota Própria", "validado": true, "status": "", "id": "a19"}, {"motorista": "016489 - OLEONES DONATO DOS SANTOS", "transp": "000073", "placa": "RVC1F24", "origem": "Frota Própria", "validado": false, "status": "", "id": "a20"}, {"motorista": "020645 - DIEGO DE OLIVEIRA MORAIS", "transp": "000073", "placa": "RVC1F26", "origem": "Frota Própria", "validado": false, "status": "", "id": "a21"}, {"motorista": "019762 - VALTER RUBIO JUNIOR", "transp": "002073", "placa": "BAW8910", "origem": "Agregados", "validado": false, "status": "", "id": "a22"}, {"motorista": "000247 - LUIZ CLAUDIO \"NEY\"", "transp": "001477", "placa": "APZ7814", "origem": "Spot", "validado": true, "status": "", "id": "a23"}, {"motorista": "000237 - MARCOS NORBERTO", "transp": "000274", "placa": "MBH6424", "origem": "Agregados", "validado": true, "status": "", "id": "a24"}];
+
+const FLEET_BY_PLACA = {};
+FLEET.forEach(f => FLEET_BY_PLACA[f.placa] = f);
+
+const PROFILE_ORDER = ['VAN','VUC','3/4 LEVE','3/4 ADAPT','TOCO','TRUCK','BITRUCK'];
+
+let assignments = [];
+let filterMode = 'all';
+let searchTerm = '';
+let nextId = 1000;
+
+const STORAGE_KEY = 'frota_assignments_v1';
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){
+      assignments = JSON.parse(res.value);
+      return;
+    }
+  }catch(e){ /* not found, fall through to defaults */ }
+  assignments = JSON.parse(JSON.stringify(DEFAULT_ASSIGNMENTS));
+  await saveState();
+}
+
+async function saveState(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(assignments), false);
+  }catch(e){ console.error('Falha ao salvar', e); }
+}
+
+function enrich(a){
+  const fleet = FLEET_BY_PLACA[a.placa];
+  const perfil = fleet ? fleet.perfil : 'DESCONHECIDO';
+  const pesoMax = fleet ? fleet.pesoMax : 0;
+  const found = !!fleet;
+  const disponivel = found && a.validado && a.status !== 'MANUTENÇÃO';
+  return {...a, perfil, pesoMax, found, disponivel};
+}
+
+function fmtKg(n){
+  return Math.round(n).toLocaleString('pt-BR');
+}
+
+function render(){
+  const enriched = assignments.map(enrich);
+
+  // ---- KPIs ----
+  const totalVeic = enriched.length;
+  const okList = enriched.filter(e => e.disponivel);
+  const alertList = enriched.filter(e => !e.disponivel);
+  const pesoOk = okList.reduce((s,e)=>s+e.pesoMax,0);
+  const pesoAlert = alertList.reduce((s,e)=>s+e.pesoMax,0);
+  const pesoTotal = pesoOk + pesoAlert;
+  const pct = pesoTotal > 0 ? Math.round((pesoOk/pesoTotal)*100) : 0;
+
+  document.getElementById('kpiTotal').innerHTML = totalVeic + '<span class="unit">veíc.</span>';
+  document.getElementById('kpiTotalFoot').textContent = FLEET.length + ' cadastrados na frota';
+  document.getElementById('kpiPesoOk').innerHTML = fmtKg(pesoOk) + '<span class="unit">kg</span>';
+  document.getElementById('kpiPesoOkFoot').textContent = okList.length + ' veículo(s) confirmado(s)';
+  document.getElementById('kpiPesoAlert').innerHTML = fmtKg(pesoAlert) + '<span class="unit">kg</span>';
+  document.getElementById('kpiPesoAlertFoot').textContent = alertList.length + ' veículo(s) sem confirmação';
+  document.getElementById('kpiPct').innerHTML = pct + '<span class="unit">%</span>';
+
+  // ---- Profile breakdown ----
+  const profiles = {};
+  enriched.forEach(e=>{
+    const key = e.perfil;
+    if(!profiles[key]) profiles[key] = {ok:0, alert:0, pesoOk:0, pesoAlert:0};
+    if(e.disponivel){ profiles[key].ok++; profiles[key].pesoOk += e.pesoMax; }
+    else { profiles[key].alert++; profiles[key].pesoAlert += e.pesoMax; }
+  });
+  const profileKeys = Object.keys(profiles).sort((a,b)=>{
+    const ia = PROFILE_ORDER.indexOf(a), ib = PROFILE_ORDER.indexOf(b);
+    if(ia===-1 && ib===-1) return a.localeCompare(b);
+    if(ia===-1) return 1;
+    if(ib===-1) return -1;
+    return ia-ib;
+  });
+
+  const profileListEl = document.getElementById('profileList');
+  document.getElementById('profileCount').textContent = profileKeys.length + ' perfis';
+
+  if(profileKeys.length === 0){
+    profileListEl.innerHTML = '<div class="empty-state">Nenhum veículo escalado ainda.</div>';
+  } else {
+    profileListEl.innerHTML = profileKeys.map(key=>{
+      const p = profiles[key];
+      const total = p.ok + p.alert;
+      const okPct = total ? (p.ok/total*100) : 0;
+      const alertPct = total ? (p.alert/total*100) : 0;
+      return `
+        <div class="profile-row">
+          <div class="profile-row-top">
+            <span class="profile-name">${key}</span>
+            <span class="profile-nums"><b>${p.ok}</b>/${total} disponíveis</span>
+          </div>
+          <div class="bar-track">
+            ${p.ok ? `<div class="bar-seg bar-ok" style="width:${okPct}%"></div>` : ''}
+            ${p.alert ? `<div class="bar-seg bar-alert" style="width:${alertPct}%"></div>` : ''}
+          </div>
+          <div class="profile-weights">
+            <span class="w-ok">${fmtKg(p.pesoOk)} kg disponível</span>
+            <span class="w-alert">${p.pesoAlert ? fmtKg(p.pesoAlert)+' kg pendente' : '—'}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ---- Table ----
+  let visible = enriched;
+  if(filterMode === 'ok') visible = visible.filter(e=>e.disponivel);
+  if(filterMode === 'alert') visible = visible.filter(e=>!e.disponivel);
+  if(searchTerm){
+    const t = searchTerm.toLowerCase();
+    visible = visible.filter(e => (e.placa||'').toLowerCase().includes(t) || (e.motorista||'').toLowerCase().includes(t));
+  }
+
+  document.getElementById('rowCount').textContent = enriched.length + ' registros';
+  const tbody = document.getElementById('tableBody');
+  const emptyState = document.getElementById('emptyState');
+
+  if(visible.length === 0){
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+  } else {
+    emptyState.style.display = 'none';
+    tbody.innerHTML = visible.map(e=>{
+      const nameParts = (e.motorista||'').split(' - ');
+      const idPart = nameParts.length>1 ? nameParts[0] : '';
+      const namePart = nameParts.length>1 ? nameParts.slice(1).join(' - ') : e.motorista;
+      let statusBadge;
+      if(!e.found){
+        statusBadge = `<span class="status-badge status-warn">Placa não cadastrada</span>`;
+      } else if(e.status === 'MANUTENÇÃO'){
+        statusBadge = `<span class="status-badge status-alert">Manutenção</span>`;
+      } else if(e.disponivel){
+        statusBadge = `<span class="status-badge status-ok">Disponível</span>`;
+      } else {
+        statusBadge = `<span class="status-badge status-alert">Pendente</span>`;
+      }
+      return `
+        <tr class="${e.disponivel ? '' : 'row-alert'}" data-id="${e.id}">
+          <td>
+            <span class="placa-tag">${e.placa||'—'}</span>
+            <div class="perfil-badge">${e.perfil}</div>
+          </td>
+          <td>
+            <div class="motorista-name">${namePart||'—'}</div>
+            ${idPart ? `<div class="motorista-id">#${idPart}</div>` : ''}
+          </td>
+          <td class="peso-cell">${e.pesoMax ? fmtKg(e.pesoMax)+' kg' : '—'}</td>
+          <td>
+            ${statusBadge}
+            <select class="status-select" data-action="status" data-id="${e.id}" style="margin-top:5px;display:block;">
+              <option value="" ${e.status===''?'selected':''}>Sem status</option>
+              <option value="MANUTENÇÃO" ${e.status==='MANUTENÇÃO'?'selected':''}>Manutenção</option>
+              <option value="ATRASO" ${e.status==='ATRASO'?'selected':''}>Atraso</option>
+              <option value="QUEBRA" ${e.status==='QUEBRA'?'selected':''}>Quebra</option>
+            </select>
+          </td>
+          <td>
+            <label class="switch">
+              <input type="checkbox" data-action="validado" data-id="${e.id}" ${e.validado?'checked':''}>
+              <span class="slider"></span>
+            </label>
+          </td>
+          <td>
+            <button class="icon-btn" data-action="remove" data-id="${e.id}" title="Remover">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+            </button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ---- Add-form placa dropdown: fleet plates not already assigned ----
+  const usedPlacas = new Set(assignments.map(a=>a.placa));
+  const available = FLEET.filter(f => !usedPlacas.has(f.placa));
+  const addPlaca = document.getElementById('addPlaca');
+  addPlaca.innerHTML = available.length
+    ? available.map(f=>`<option value="${f.placa}">${f.placa} · ${f.perfil} (${fmtKg(f.pesoMax)} kg)</option>`).join('')
+    : `<option value="">Todos os veículos já escalados</option>`;
+}
+
+function setToday(){
+  const d = new Date();
+  const opts = {weekday:'long', day:'2-digit', month:'long', year:'numeric'};
+  let s = d.toLocaleDateString('pt-BR', opts);
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  document.getElementById('todayPill').textContent = s;
+}
+
+document.addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('[data-action="remove"]');
+  if(btn){
+    const id = btn.dataset.id;
+    assignments = assignments.filter(a=>a.id !== id);
+    await saveState();
+    render();
+    return;
+  }
+  const chip = ev.target.closest('.filter-chip');
+  if(chip){
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    filterMode = chip.dataset.filter;
+    render();
+    return;
+  }
+});
+
+document.addEventListener('change', async (ev)=>{
+  const t = ev.target;
+  if(t.dataset && t.dataset.action === 'validado'){
+    const id = t.dataset.id;
+    const row = assignments.find(a=>a.id===id);
+    if(row){ row.validado = t.checked; await saveState(); render(); }
+  }
+  if(t.dataset && t.dataset.action === 'status'){
+    const id = t.dataset.id;
+    const row = assignments.find(a=>a.id===id);
+    if(row){ row.status = t.value; await saveState(); render(); }
+  }
+});
+
+document.getElementById('searchInput').addEventListener('input', (ev)=>{
+  searchTerm = ev.target.value;
+  render();
+});
+
+document.getElementById('addBtn').addEventListener('click', async ()=>{
+  const placa = document.getElementById('addPlaca').value;
+  const motorista = document.getElementById('addMotorista').value.trim();
+  const origem = document.getElementById('addOrigem').value;
+  if(!placa){ return; }
+  assignments.push({
+    id: 'n' + (nextId++),
+    motorista: motorista || 'Motorista não informado',
+    transp: '',
+    placa: placa,
+    origem: origem,
+    validado: false,
+    status: ''
+  });
+  document.getElementById('addMotorista').value = '';
+  await saveState();
+  render();
+});
+
+document.getElementById('resetBtn').addEventListener('click', async ()=>{
+  if(!confirm('Isso vai substituir a lista atual pelos dados originais da planilha importada. Continuar?')) return;
+  assignments = JSON.parse(JSON.stringify(DEFAULT_ASSIGNMENTS));
+  await saveState();
+  render();
+});
+
+(async function init(){
+  setToday();
+  await loadState();
+  render();
+})();
+</script>
+</body>
+</html>
